@@ -1,6 +1,8 @@
 # API to SpecFlow Converter
 
-A tool that simplifies the creation of SpecFlow test cases by automatically converting API responses into formatted SpecFlow scenarios. Perfect for QA engineers and developers who want to streamline their API testing workflow.
+A tool that simplifies the creation of SpecFlow test cases by automatically converting API responses into formatted SpecFlow scenarios. Perfect for streamlining simple API testing workflows.
+
+Please note that this implementation requires fairly specific SpecFlow step-definitions that are not provided with the project, though generating a few Scenarios should give you enough information to quickly replicate them. If need be, feel free to change the javascript in routes/+page.svelte to more precisely fit your current framework for API SpecFlow Scenario creation.
 
 ## Features
 - One-click conversion of API responses to SpecFlow test scenarios
