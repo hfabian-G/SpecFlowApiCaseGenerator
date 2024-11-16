@@ -34,14 +34,14 @@
            
            // Generate SpecFlow test
            let specFlow = `Scenario: CHANGE\n`;
-           specFlow += `\tGiven an API route "${apiRoute}"\n`;
+           specFlow += `    Given an API route "${apiRoute}"\n`;
            
            if (authCode) {
-               specFlow += `\tAnd I make a request with the authorization "${authCode}"\n`;
+               specFlow += `    And I make a request with the authorization "${authCode}"\n`;
            }
            
-           specFlow += `\tWhen I validate the response\n`;
-           specFlow += `\tThen the response should succeed\n`;
+           specFlow += `    When I validate the response\n`;
+           specFlow += `    Then the response should succeed\n`;
 
            // Process response properties recursively
            function processProperties(obj, prefix = '') {
@@ -49,7 +49,7 @@
                    const propertyPath = prefix ? `${prefix}.${key}` : key;
                    
                    if (Array.isArray(value)) {
-                       specFlow += `\tAnd property ${propertyPath} should be a list with ${value.length} items\n`;
+                       specFlow += `    And property ${propertyPath} should be a list with ${value.length} items\n`;
                        // Process array items if they are objects
                        value.forEach((item, index) => {
                            if (typeof item === 'object' && item !== null) {
@@ -59,7 +59,7 @@
                    } else if (typeof value === 'object' && value !== null) {
                        processProperties(value, propertyPath);
                    } else {
-                       specFlow += `\tAnd property ${propertyPath} should be "${value}"\n`;
+                       specFlow += `    And property ${propertyPath} should be "${value}"\n`;
                    }
                }
            }
@@ -109,113 +109,193 @@
        }, 0);
    }
 </script>
+<div class="container bg-gradient-to-b from-gray-50 to-white">
+  <h1 class="text-center text-3xl font-bold text-gray-800 mb-12">API to SpecFlow Converter</h1>
+  
+  <div class="card-container">
+      <div class="input-section">
+          <label class="input-label">API Configuration</label>
+          <div class="input-container mb-6">
+              <input 
+                  type="text" 
+                  bind:value={baseUrl} 
+                  placeholder="Base URL (e.g. https://api.example.com)"
+                  class="input"
+              />
+              <input 
+                  type="text" 
+                  bind:value={endpoint} 
+                  placeholder="Endpoint (e.g. /api/v1/users)"
+                  class="input"
+              />
+          </div>
 
-<div class="container">
-   <h1 class="text-center mb-8">API to SpecFlow Converter</h1>
-   
-   <div class="input-container mb-4">
-       <input 
-           type="text" 
-           bind:value={baseUrl} 
-           placeholder="Base URL (e.g. https://api.example.com)"
-           class="input"
-       />
-       <input 
-           type="text" 
-           bind:value={endpoint} 
-           placeholder="Endpoint (e.g. /api/v1/users)"
-           class="input"
-       />
-   </div>
+          <div class="input-container mb-8">
+              <input 
+                  type="text" 
+                  bind:value={authCode} 
+                  placeholder="Basic Auth (e.g. Basic dXNlcjpwYXNz...)"
+                  class="input"
+              />
+          </div>
 
-   <div class="input-container mb-8">
-       <input 
-           type="text" 
-           bind:value={authCode} 
-           placeholder="Basic Auth (e.g. Basic dXNlcjpwYXNz...)"
-           class="input"
-       />
-   </div>
+          {#if apiRoute}
+              <div class="url-display">
+                  Full URL: {apiRoute}
+              </div>
+          {/if}
+      </div>
+      
+      <div class="input-section mt-8">
+          <label class="input-label">Parameters (Optional)</label>
+          <div class="pairs-container">
+              {#each inputPairs as pair, i}
+                  <div class="input-container mb-6">
+                      <input 
+                          type="text" 
+                          bind:value={pair.key} 
+                          placeholder="Key"
+                          class="input"
+                          bind:this={keyInputs[i]}
+                          on:input={() => handleKeyInput(i)}
+                      />
+                      <input 
+                          type="text" 
+                          bind:value={pair.value} 
+                          placeholder="Value"
+                          class="input"
+                          on:blur={() => handleValueBlur(i)}
+                      />
+                  </div>
+              {/each}
+          </div>
+      </div>
 
-   {#if apiRoute}
-       <div class="text-sm text-gray-600 mb-8 w-full max-w-800px">
-           Full URL: {apiRoute}
-       </div>
-   {/if}
-   
-   <div class="pairs-container">
-   	{#each inputPairs as pair, i}
-   		<div class="input-container mb-4">
-   			<input 
-   				type="text" 
-   				bind:value={pair.key} 
-   				placeholder="Key"
-   				class="input"
-   				bind:this={keyInputs[i]}
-   				on:input={() => handleKeyInput(i)}
-   			/>
-   			<input 
-   				type="text" 
-   				bind:value={pair.value} 
-   				placeholder="Value"
-   				class="input"
-   				on:blur={() => handleValueBlur(i)}
-   			/>
-   		</div>
-   	{/each}
-   </div>
+      <button 
+          on:click={handleGenerate}
+          class="generate-button"
+          disabled={!apiRoute || isLoading}
+      >
+          {isLoading ? 'Generating...' : 'Generate SpecFlow'}
+      </button>
 
-   <button 
-       on:click={handleGenerate}
-       class="mb-4 px-6 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400"
-       disabled={!apiRoute || isLoading}
-   >
-       {isLoading ? 'Generating...' : 'Generate SpecFlow'}
-   </button>
-
-   <textarea
-    readonly
-    style="width: 70vw"
-    class="h-64 p-4 border rounded font-mono text-sm"
-    value={outputText}
-    placeholder="Generated SpecFlow will appear here..."
-/>
+      <textarea
+          readonly
+          class="output-textarea"
+          value={outputText}
+          placeholder="Generated SpecFlow will appear here..."
+      />
+  </div>
 </div>
 
 <style>
-   .container {
-   	height: 100vh;
-   	display: flex;
-   	flex-direction: column;
-   	align-items: center;
-   	padding: 2rem;
-   	overflow-y: auto;
-   }
+  .container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem;
+      overflow-y: auto;
+  }
 
-   .pairs-container {
-   	width: 100%;
-   	display: flex;
-   	flex-direction: column;
-   	align-items: center;
-   }
+  .card-container {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      width: 90%;
+      max-width: 1200px;
+  }
 
-   .input-container {
-   	display: flex;
-   	gap: 1rem;
-   	width: 100%;
-   	max-width: 800px;
-   }
+  .input-section {
+      margin-bottom: 2rem;
+  }
 
-   .input {
-   	width: 100%;
-   	padding: 0.5rem;
-   	border: 1px solid #ccc;
-   	border-radius: 4px;
-   }
+  .input-label {
+      display: block;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #4B5563;
+      margin-bottom: 1rem;
+  }
 
-   textarea {
-       resize: vertical;
-       min-height: 200px;
-       background-color: #f8f9fa;
-   }
+  .pairs-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+  }
+
+  .input-container {
+      display: flex;
+      gap: 1.5rem;
+      width: 100%;
+  }
+
+  .input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid #E5E7EB;
+      border-radius: 0.5rem;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+  }
+
+  .input:focus {
+      outline: none;
+      border-color: #60A5FA;
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+  }
+
+  .url-display {
+      background-color: #F3F4F6;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      color: #4B5563;
+      font-family: monospace;
+      font-size: 0.9rem;
+      width: 100%;
+  }
+
+  .generate-button {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: #3B82F6;
+      color: white;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      margin: 2rem 0;
+      transition: all 0.2s;
+  }
+
+  .generate-button:hover:not(:disabled) {
+      background-color: #2563EB;
+      transform: translateY(-1px);
+  }
+
+  .generate-button:disabled {
+      background-color: #9CA3AF;
+      cursor: not-allowed;
+  }
+
+  .output-textarea {
+      resize: vertical;
+      min-height: 300px;
+      width: 100%;
+      padding: 1rem;
+      border: 1px solid #E5E7EB;
+      border-radius: 0.5rem;
+      font-family: monospace;
+      font-size: 0.9rem;
+      background-color: #F9FAFB;
+      margin-top: 1rem;
+      box-sizing: border-box;
+  }
+
+  .output-textarea:focus {
+      outline: none;
+      border-color: #60A5FA;
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+  }
 </style>
