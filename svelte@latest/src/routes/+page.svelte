@@ -17,6 +17,15 @@
        outputText = "";
        
        try {
+           // Construct URL with query parameters
+           let finalUrl = apiRoute;
+           if (Object.keys(parameters).length > 0) {
+               const queryString = new URLSearchParams(parameters).toString();
+               finalUrl = `${apiRoute}?${queryString}`;
+           }
+
+		   console.log(finalUrl);
+
            const headers = {
                'Content-Type': 'application/json'
            };
@@ -25,7 +34,7 @@
                headers['Authorization'] = authCode;
            }
 
-           const response = await fetch(apiRoute, {
+           const response = await fetch(finalUrl, {
                method: 'GET',
                headers: headers
            });
@@ -38,6 +47,15 @@
            
            if (authCode) {
                specFlow += `    And I make a request with the authorization "${authCode}"\n`;
+           }
+
+           // Add parameters table if there are any parameters
+           if (Object.keys(parameters).length > 0) {
+               specFlow += `    Given the parameters\n`;
+               specFlow += `      |name|value|\n`;
+               Object.entries(parameters).forEach(([key, value]) => {
+                   specFlow += `      |${key}|${value}|\n`;
+               });
            }
            
            specFlow += `    When I validate the response\n`;
@@ -75,35 +93,35 @@
    }
 
    function handleValueBlur(index) {
-   	if (inputPairs[index].key && inputPairs[index].value) {
-   		parameters[inputPairs[index].key] = inputPairs[index].value;
-   		parameters = {...parameters};
-   		addNewPair();
-   	} else if (inputPairs[index].key === "" && inputPairs[index].value === "" && inputPairs.length > 1) {
-   		inputPairs = inputPairs.filter((_, i) => i !== index);
-   		const oldKey = Object.keys(parameters)[index];
-   		if (oldKey) {
-   			delete parameters[oldKey];
-   			parameters = {...parameters};
-   		}
-   	}
+       if (inputPairs[index].key && inputPairs[index].value) {
+           parameters[inputPairs[index].key] = inputPairs[index].value;
+           parameters = {...parameters};
+           addNewPair();
+       } else if (inputPairs[index].key === "" && inputPairs[index].value === "" && inputPairs.length > 1) {
+           inputPairs = inputPairs.filter((_, i) => i !== index);
+           const oldKey = Object.keys(parameters)[index];
+           if (oldKey) {
+               delete parameters[oldKey];
+               parameters = {...parameters};
+           }
+       }
    }
 
    function handleKeyInput(index) {
-   	if (inputPairs[index].key === "") {
-   		const oldKey = Object.keys(parameters)[index];
-   		if (oldKey) {
-   			delete parameters[oldKey];
-   			parameters = {...parameters};
-   		}
-   		if (inputPairs.length > 1) {
-   			inputPairs = inputPairs.filter((_, i) => i !== index);
-   		}
-   	}
+       if (inputPairs[index].key === "") {
+           const oldKey = Object.keys(parameters)[index];
+           if (oldKey) {
+               delete parameters[oldKey];
+               parameters = {...parameters};
+           }
+           if (inputPairs.length > 1) {
+               inputPairs = inputPairs.filter((_, i) => i !== index);
+           }
+       }
    }
 
    function addNewPair() {
-   	inputPairs = [...inputPairs, { key: "", value: "" }];
+       inputPairs = [...inputPairs, { key: "", value: "" }];
        setTimeout(() => {
            keyInputs[keyInputs.length - 1].focus({preventScroll: true});
        }, 0);
@@ -111,6 +129,7 @@
 </script>
 <div class="container bg-gradient-to-b from-gray-50 to-white">
   <h1 class="text-center text-3xl font-bold text-gray-800 mb-12">API to SpecFlow Converter</h1>
+  <h2>Note: This only handles query string parameters at the moment</h2>
   
   <div class="card-container">
       <div class="input-section">
