@@ -24,7 +24,7 @@
                finalUrl = `${apiRoute}?${queryString}`;
            }
 
-		   console.log(finalUrl);
+           console.log(finalUrl);
 
            const headers = {
                'Content-Type': 'application/json'
@@ -39,8 +39,6 @@
                headers: headers
            });
 
-           const data = await response.json();
-           
            // Generate SpecFlow test
            let specFlow = `Scenario: CHANGE\n`;
            specFlow += `    Given an API route "${apiRoute}"\n`;
@@ -59,7 +57,18 @@
            }
            
            specFlow += `    When I validate the response\n`;
-           specFlow += `    Then the response should succeed\n`;
+
+           // Handle different status codes
+           if (response.status >= 400) {
+               specFlow += `    Then Status Code should be the number ${response.status}\n`;
+               outputText = specFlow;
+               return;
+           } else {
+               specFlow += `    Then the response should succeed\n`;
+           }
+
+           // Only process response body for successful responses
+           const data = await response.json();
 
            // Process response properties recursively
            function processProperties(obj, prefix = '') {
