@@ -12,7 +12,6 @@
             const headers = {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json',
-                'Origin': 'http://vm-hsaws08d'
             };
             
             if (auth) {
@@ -170,8 +169,8 @@
 
     // Example data to show in the textarea placeholder
     const exampleData = `ScenarioName,Authorization,FullURL
-Get User,,http://vm-hsaws08d/PartnerWebService.New/api/Employer/GetEmployerProfile
-Get Post,,http://vm-hsaws08d/PartnerWebService.New/api/Employer/GetEmployerInfo`;
+Get User,,https://jsonplaceholder.typicode.com/users/1
+Get Post,,https://jsonplaceholder.typicode.com/posts/1`;
 </script>
 
 <div class="container bg-gradient-to-b from-gray-50 to-white">
