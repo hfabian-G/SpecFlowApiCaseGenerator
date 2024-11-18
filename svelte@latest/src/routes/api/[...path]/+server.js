@@ -1,27 +1,34 @@
+// src/routes/api/[...path]/+server.js
 export async function GET({ params, url, request }) {
-    const targetUrl = `http://vm-hsaws08d/${params.path}`;
-    const headers = new Headers(request.headers);
+    try {
+        const targetUrl = `http://vm-hsaws08d/${params.path}`;
+        console.log('Proxying request to:', targetUrl);
 
-    // Forward the request
-    const response = await fetch(targetUrl, {
-        method: request.method,
-        headers: headers
-    });
+        const headers = new Headers();
+        headers.set('Content-Type', 'application/json');
+        // Copy authorization header if present
+        const authHeader = request.headers.get('Authorization');
+        if (authHeader) {
+            headers.set('Authorization', authHeader);
+        }
 
-    return response;
+        const response = await fetch(targetUrl, {
+            method: 'GET',
+            headers: headers,
+            timeout: 30000 // 30 second timeout
+        });
+
+        const data = await response.json();
+        return new Response(JSON.stringify(data), {
+            headers: { 'Content-Type': 'application/json' }
+        });
+    } catch (error) {
+        console.error('Proxy error:', error);
+        return new Response(JSON.stringify({ error: error.message }), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' }
+        });
+    }
 }
 
-export async function POST({ params, url, request }) {
-    const targetUrl = `http://vm-hsaws08d/${params.path}`;
-    const headers = new Headers(request.headers);
-    const body = await request.text();
-
-    // Forward the request
-    const response = await fetch(targetUrl, {
-        method: request.method,
-        headers: headers,
-        body: body
-    });
-
-    return response;
-}
+export const POST = GET; // Handle POST same way initially
