@@ -19,8 +19,11 @@
 			<li aria-current={$page.url.pathname === '/' ? 'page' : undefined}>
 				<a href="/">Basic</a>
 			</li>
-			<li aria-current={$page.url.pathname === '/fileupload' ? 'page': undefined}>
+			<li aria-current={$page.url.pathname === '/CSV' ? 'page': undefined}>
 				<a href="/csvinputstyle">CSV-Style</a>
+			</li>
+			<li aria-current={$page.url.pathname === '/DragAndDrop' ? 'page' : undefined}>
+				<a href="/responsedraganddrop">Drag-And-Drop</a>
 			</li>
 		</ul>
 		<svg viewBox="0 0 2 3" aria-hidden="true">
