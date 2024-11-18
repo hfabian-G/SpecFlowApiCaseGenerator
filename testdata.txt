@@ -1,0 +1,6 @@
+For Batch Entry (Though Done Oddly):
+ScenarioName,Authorization,FullURL,userId,postId,_limit
+Get User Posts,Basic dXNlcjpwYXNz,https://jsonplaceholder.typicode.com/posts,1,,5
+Get Comments,prev,https://jsonplaceholder.typicode.com/comments,,2,3
+Get Another Post,Basic bmV3OnBhc3M=,https://jsonplaceholder.typicode.com/posts,2,,
+Get More Comments,prev,https://jsonplaceholder.typicode.com/comments,,3,10
