@@ -6,39 +6,34 @@
     let outputText = '';
     let isProcessing = false;
     let useBodyParams = false;
-    const baseUrl = 'http://vm-hsaws08d'; // Base URL for all requests
 
     async function validateEndpoint(url, auth = '', params = null, useBody = false) {
         try {
             const headers = {
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Origin': 'http://vm-hsaws08d'
             };
             
             if (auth) {
                 headers['Authorization'] = auth;
             }
 
-            // Construct full URL with base URL
-            let fullUrl = url;
-            if (!url.startsWith('http')) {
-                // Remove any leading slashes from the URL path
-                const cleanPath = url.replace(/^\/+/, '');
-                fullUrl = `${baseUrl}/${cleanPath}`;
-            }
-            
-            let finalUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(fullUrl)}`;
+            let finalUrl = url;
             const options = {
                 method: useBody ? 'POST' : 'GET',
-                headers: headers
+                headers: headers,
+                mode: 'cors',
+                credentials: 'include'
             };
 
             if (params) {
                 if (useBody) {
+                    options.method = 'POST';
                     options.body = JSON.stringify(params);
                 } else {
                     const queryString = new URLSearchParams(params).toString();
-                    finalUrl = `${finalUrl}&${queryString}`;
+                    finalUrl = `${url}?${queryString}`;
                 }
             }
 
@@ -175,8 +170,8 @@
 
     // Example data to show in the textarea placeholder
     const exampleData = `ScenarioName,Authorization,FullURL
-Get User,,vm-hsaw08d/PartnerWebServices.New/api/Employer/GetEmployerProfile
-Get Post,,vm-hsaw08d/PartnerWebServices.New/api/Employer/GetEmployerInfo`;
+Get User,,http://vm-hsaws08d/PartnerWebService.New/api/Employer/GetEmployerProfile
+Get Post,,http://vm-hsaws08d/PartnerWebService.New/api/Employer/GetEmployerInfo`;
 </script>
 
 <div class="container bg-gradient-to-b from-gray-50 to-white">
