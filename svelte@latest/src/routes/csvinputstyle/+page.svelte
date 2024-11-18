@@ -5,8 +5,9 @@
     let inputText = '';
     let outputText = '';
     let isProcessing = false;
+    let useBodyParams = false;
 
-    async function validateEndpoint(url, auth = '') {
+    async function validateEndpoint(url, auth = '', params = null, useBody = false) {
         try {
             const headers = {
                 'Content-Type': 'application/json'
@@ -16,10 +17,23 @@
                 headers['Authorization'] = auth;
             }
 
-            const response = await fetch(url, {
+            let finalUrl = url;
+            const options = {
                 method: 'GET',
                 headers: headers
-            });
+            };
+
+            if (params) {
+                if (useBody) {
+                    options.method = 'POST';
+                    options.body = JSON.stringify(params);
+                } else {
+                    const queryString = new URLSearchParams(params).toString();
+                    finalUrl = `${url}?${queryString}`;
+                }
+            }
+
+            const response = await fetch(finalUrl, options);
 
             // We want to return both the response and the parsed data
             const data = await response.json();
@@ -69,8 +83,16 @@
                     previousAuth = auth;
                 }
 
+                // Extract query parameters from row (any additional columns)
+                const params = {};
+                Object.entries(row).forEach(([key, value]) => {
+                    if (!['ScenarioName', 'Authorization', 'FullURL'].includes(key) && value) {
+                        params[key] = value;
+                    }
+                });
+
                 // Make the actual request and get both response and data
-                const { response, data } = await validateEndpoint(row.FullURL, auth);
+                const { response, data } = await validateEndpoint(row.FullURL, auth, params, useBodyParams);
                 
                 // Start building the SpecFlow scenario
                 output += `Scenario: ${scenarioName}\n`;
@@ -79,14 +101,6 @@
                 if (auth) {
                     output += `    And I make a request with the authorization "${auth}"\n`;
                 }
-
-                // Extract query parameters from row (any additional columns)
-                const params = {};
-                Object.entries(row).forEach(([key, value]) => {
-                    if (!['ScenarioName', 'Authorization', 'FullURL'].includes(key) && value) {
-                        params[key] = value;
-                    }
-                });
 
                 // Add parameters if any exist
                 if (Object.keys(params).length > 0) {
@@ -166,6 +180,18 @@ Get Post,,https://jsonplaceholder.typicode.com/posts/1`;
                 Format (header row optional):<br/>
                 ScenarioName,Authorization,FullURL<br/>
                 Authorization can be left empty if not needed, or use "prev" to reuse previous row's auth.
+            </div>
+            <div class="mb-4 px-4 flex items-center">
+                <label class="flex items-center cursor-pointer">
+                    <input
+                        type="checkbox"
+                        bind:checked={useBodyParams}
+                        class="form-checkbox h-4 w-4 text-blue-600 transition duration-150 ease-in-out"
+                    />
+                    <span class="ml-2 text-sm text-gray-600">
+                        Send parameters in request body (uses POST instead of GET)
+                    </span>
+                </label>
             </div>
             <textarea
                 bind:value={inputText}
