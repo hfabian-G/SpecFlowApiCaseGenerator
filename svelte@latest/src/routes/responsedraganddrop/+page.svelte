@@ -2,7 +2,47 @@
     let inputText = '';
     let outputText = '';
     let scenarioName = 'API Response';
+    let apiRoute = '';
+    let authCode = '';
     let isProcessing = false;
+    let parameters = {};
+    let inputPairs = [{ key: "", value: "" }];
+    let keyInputs = [];
+
+    function handleValueBlur(index) {
+        if (inputPairs[index].key && inputPairs[index].value) {
+            parameters[inputPairs[index].key] = inputPairs[index].value;
+            parameters = {...parameters};
+            addNewPair();
+        } else if (inputPairs[index].key === "" && inputPairs[index].value === "" && inputPairs.length > 1) {
+            inputPairs = inputPairs.filter((_, i) => i !== index);
+            const oldKey = Object.keys(parameters)[index];
+            if (oldKey) {
+                delete parameters[oldKey];
+                parameters = {...parameters};
+            }
+        }
+    }
+
+    function handleKeyInput(index) {
+        if (inputPairs[index].key === "") {
+            const oldKey = Object.keys(parameters)[index];
+            if (oldKey) {
+                delete parameters[oldKey];
+                parameters = {...parameters};
+            }
+            if (inputPairs.length > 1) {
+                inputPairs = inputPairs.filter((_, i) => i !== index);
+            }
+        }
+    }
+
+    function addNewPair() {
+        inputPairs = [...inputPairs, { key: "", value: "" }];
+        setTimeout(() => {
+            keyInputs[keyInputs.length - 1]?.focus({preventScroll: true});
+        }, 0);
+    }
 
     function processResponse(jsonText, name = 'API Response') {
         try {
@@ -11,6 +51,25 @@
 
             // Build SpecFlow scenario
             output += `Scenario: ${name}\n`;
+            
+            if (apiRoute) {
+                output += `    Given an API route "${apiRoute}"\n`;
+            }
+            
+            if (authCode) {
+                output += `    And I make a request with the authorization "${authCode}"\n`;
+            }
+
+            // Add parameters if any exist
+            if (Object.keys(parameters).length > 0) {
+                output += `    Given the parameters\n`;
+                output += `      | name | value |\n`;
+                Object.entries(parameters).forEach(([key, value]) => {
+                    output += `      | ${key} | ${value} |\n`;
+                });
+            }
+
+            output += `    When I validate the response\n`;
             output += `    Then the response should succeed\n`;
 
             // Process response properties recursively
@@ -69,10 +128,48 @@
     
     <div class="card-container">
         <div class="input-section">
-            <label class="input-label">JSON Response</label>
-            <div class="mb-4 text-sm text-gray-600 px-4">
-                Paste the JSON response from your API call here.
+            <label class="input-label">API Configuration</label>
+            <div class="input-container mb-6">
+                <input 
+                    type="text" 
+                    bind:value={apiRoute} 
+                    placeholder="API Route (e.g. https://api.example.com/users)"
+                    class="input"
+                />
             </div>
+
+            <div class="input-container mb-8">
+                <input 
+                    type="text" 
+                    bind:value={authCode} 
+                    placeholder="Basic Auth (e.g. Basic dXNlcjpwYXNz...)"
+                    class="input"
+                />
+            </div>
+
+            <label class="input-label">Parameters (Optional)</label>
+            <div class="pairs-container">
+                {#each inputPairs as pair, i}
+                    <div class="input-container mb-6">
+                        <input 
+                            type="text" 
+                            bind:value={pair.key} 
+                            placeholder="Key"
+                            class="input"
+                            bind:this={keyInputs[i]}
+                            on:input={() => handleKeyInput(i)}
+                        />
+                        <input 
+                            type="text" 
+                            bind:value={pair.value} 
+                            placeholder="Value"
+                            class="input"
+                            on:blur={() => handleValueBlur(i)}
+                        />
+                    </div>
+                {/each}
+            </div>
+
             <div class="mb-4 px-4">
                 <label class="block text-sm text-gray-600 mb-2">Scenario Name:</label>
                 <input
@@ -81,6 +178,11 @@
                     class="w-full p-2 border border-gray-300 rounded-md"
                     placeholder="Enter scenario name"
                 />
+            </div>
+
+            <label class="input-label">JSON Response</label>
+            <div class="mb-4 text-sm text-gray-600 px-4">
+                Paste the JSON response from your API call here.
             </div>
             <textarea
                 bind:value={inputText}
@@ -139,6 +241,34 @@
         font-weight: 600;
         color: #4B5563;
         margin-bottom: 1rem;
+    }
+
+    .pairs-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .input-container {
+        display: flex;
+        gap: 1.5rem;
+        width: 100%;
+    }
+
+    .input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #E5E7EB;
+        border-radius: 0.5rem;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+
+    .input:focus {
+        outline: none;
+        border-color: #60A5FA;
+        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
     }
 
     .input-textarea, .output-textarea {
