@@ -6,30 +6,39 @@
     let outputText = '';
     let isProcessing = false;
     let useBodyParams = false;
+    const baseUrl = 'http://vm-hsaws08d'; // Base URL for all requests
 
     async function validateEndpoint(url, auth = '', params = null, useBody = false) {
         try {
             const headers = {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             };
             
             if (auth) {
                 headers['Authorization'] = auth;
             }
 
-            let finalUrl = url;
+            // Construct full URL with base URL
+            let fullUrl = url;
+            if (!url.startsWith('http')) {
+                // Remove any leading slashes from the URL path
+                const cleanPath = url.replace(/^\/+/, '');
+                fullUrl = `${baseUrl}/${cleanPath}`;
+            }
+            
+            let finalUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(fullUrl)}`;
             const options = {
-                method: 'GET',
+                method: useBody ? 'POST' : 'GET',
                 headers: headers
             };
 
             if (params) {
                 if (useBody) {
-                    options.method = 'POST';
                     options.body = JSON.stringify(params);
                 } else {
                     const queryString = new URLSearchParams(params).toString();
-                    finalUrl = `${url}?${queryString}`;
+                    finalUrl = `${finalUrl}&${queryString}`;
                 }
             }
 
@@ -166,8 +175,8 @@
 
     // Example data to show in the textarea placeholder
     const exampleData = `ScenarioName,Authorization,FullURL
-Get User,,https://jsonplaceholder.typicode.com/users/1
-Get Post,,https://jsonplaceholder.typicode.com/posts/1`;
+Get User,,vm-hsaw08d/PartnerWebServices.New/api/Employer/GetEmployerProfile
+Get Post,,vm-hsaw08d/PartnerWebServices.New/api/Employer/GetEmployerInfo`;
 </script>
 
 <div class="container bg-gradient-to-b from-gray-50 to-white">
