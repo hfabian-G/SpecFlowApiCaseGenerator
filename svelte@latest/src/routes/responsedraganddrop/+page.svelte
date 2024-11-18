@@ -53,16 +53,16 @@
             output += `Scenario: ${name}\n`;
             
             if (apiRoute) {
-                output += `    Given an API route "${apiRoute}"\n`;
+                output += `    Given I send a POSTrequest to ${apiRoute}\n`;
             }
             
             if (authCode) {
-                output += `    And I make a request with the authorization "${authCode}"\n`;
+                output += `    And header Authorization equals to "${authCode}"\n`;
             }
 
             // Add parameters if any exist
             if (Object.keys(parameters).length > 0) {
-                output += `    Given the parameters\n`;
+                output += `    And properties\n`;
                 output += `      | name | value |\n`;
                 Object.entries(parameters).forEach(([key, value]) => {
                     output += `      | ${key} | ${value} |\n`;
@@ -70,7 +70,7 @@
             }
 
             output += `    When I validate the response\n`;
-            output += `    Then the response should succeed\n`;
+            output += `    Then the request should succeed\n`;
 
             // Process response properties recursively
             function processProperties(obj, prefix = '') {
@@ -210,6 +210,8 @@
         </div>
     </div>
 </div>
+
+<h2 class="text-center text-3xl font-bold text-gray-800 mb-12">Delete Nulls and Dates from the Generated SpecFlow</h2>
 
 <style>
     .container {
