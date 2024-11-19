@@ -160,7 +160,7 @@
                     class="input"
                 />
             </div>
-
+            <br/>
             <div class="input-container mb-8 hover-effect">
                 <input 
                     type="text" 
@@ -169,7 +169,7 @@
                     class="input"
                 />
             </div>
-
+            <br/>
             <div class="filter-section mb-6 px-4">
                 <label class="flex items-center space-x-2 text-sm text-gray-600 hover-effect p-2 rounded-lg">
                     <input
