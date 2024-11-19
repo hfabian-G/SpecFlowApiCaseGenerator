@@ -1,130 +1,143 @@
-<script>
-    import { onMount } from 'svelte';
+<script>import { onMount } from 'svelte';
 
-    // State variables
-    let inputText = '';
-    let outputText = '';
-    let scenarioName = 'API Response';
-    let apiRoute = '';
-    let authCode = '';
-    let isProcessing = false;
-    let parameters = {};
-    let inputPairs = [{ key: "", value: "" }];
-    let keyInputs = [];
-    let filterDateAndNull = false;
+// State variables
+let inputText = '';
+let outputText = '';
+let scenarioName = 'API Response';
+let apiRoute = '';
+let authCode = '';
+let isProcessing = false;
+let parameters = {};
+let inputPairs = [{ key: "", value: "" }];
+let keyInputs = [];
+let filterDateAndNull = false;
 
-    function handleValueBlur(index) {
-        if (inputPairs[index].key && inputPairs[index].value) {
-            parameters[inputPairs[index].key] = inputPairs[index].value;
-            parameters = {...parameters};
+function hasEmptyPair() {
+    return inputPairs.some(pair => pair.key === "" && pair.value === "");
+}
+
+function handleValueBlur(index) {
+    if (inputPairs[index].key && inputPairs[index].value) {
+        parameters[inputPairs[index].key] = inputPairs[index].value;
+        parameters = {...parameters};
+        
+        // Only add a new pair if there isn't already an empty pair
+        if (!hasEmptyPair()) {
             addNewPair();
-        } else if (inputPairs[index].key === "" && inputPairs[index].value === "" && inputPairs.length > 1) {
+        }
+    } else if (inputPairs[index].key === "" && inputPairs[index].value === "" && inputPairs.length > 1) {
+        inputPairs = inputPairs.filter((_, i) => i !== index);
+        const oldKey = Object.keys(parameters)[index];
+        if (oldKey) {
+            delete parameters[oldKey];
+            parameters = {...parameters};
+        }
+    }
+}
+
+function handleKeyInput(index) {
+    if (inputPairs[index].key === "") {
+        const oldKey = Object.keys(parameters)[index];
+        if (oldKey) {
+            delete parameters[oldKey];
+            parameters = {...parameters};
+        }
+        // Only remove the pair if it's not the last empty pair
+        if (inputPairs.length > 1 && 
+            inputPairs.filter(pair => pair.key === "" && pair.value === "").length > 1) {
             inputPairs = inputPairs.filter((_, i) => i !== index);
-            const oldKey = Object.keys(parameters)[index];
-            if (oldKey) {
-                delete parameters[oldKey];
-                parameters = {...parameters};
-            }
         }
     }
+}
 
-    function handleKeyInput(index) {
-        if (inputPairs[index].key === "") {
-            const oldKey = Object.keys(parameters)[index];
-            if (oldKey) {
-                delete parameters[oldKey];
-                parameters = {...parameters};
-            }
-            if (inputPairs.length > 1) {
-                inputPairs = inputPairs.filter((_, i) => i !== index);
-            }
-        }
-    }
-
-    function addNewPair() {
+function addNewPair() {
+    // Only add a new pair if there isn't already an empty pair
+    if (!hasEmptyPair()) {
         inputPairs = [...inputPairs, { key: "", value: "" }];
         setTimeout(() => {
             keyInputs[keyInputs.length - 1]?.focus({preventScroll: true});
         }, 0);
     }
+}
 
-    function shouldIncludeResponseProperty(key, value) {
-        if (!filterDateAndNull) return true;
-        
-        if (key.includes('Date') || key.includes('date') || value === null || value === "null") {
-            return false;
-        }
-        return true;
+// Rest of the code remains unchanged
+function shouldIncludeResponseProperty(key, value) {
+    if (!filterDateAndNull) return true;
+    
+    if (key.includes('Date') || key.includes('date') || value === null || value === "null") {
+        return false;
     }
+    return true;
+}
 
-    function processResponse(jsonText, name = 'API Response') {
-        try {
-            const data = JSON.parse(jsonText);
-            let output = '';
+function processResponse(jsonText, name = 'API Response') {
+    try {
+        const data = JSON.parse(jsonText);
+        let output = '';
 
-            output += `Scenario: ${name}\n`;
-            
-            if (apiRoute) {
-                output += `    Given I send a POST request to ${apiRoute}\n`;
-            }
-            
-            if (authCode) {
-                output += `    And header Authorization equals to "${authCode}"\n`;
-            }
+        output += `Scenario: ${name}\n`;
+        
+        if (apiRoute) {
+            output += `    Given I send a POST request to ${apiRoute}\n`;
+        }
+        
+        if (authCode) {
+            output += `    And header Authorization equals to "${authCode}"\n`;
+        }
 
-            if (Object.keys(parameters).length > 0) {
-                output += `    And properties\n`;
-                output += `      | name | value |\n`;
-                Object.entries(parameters).forEach(([key, value]) => {
-                    output += `      | ${key} | ${value} |\n`;
-                });
-            }
+        if (Object.keys(parameters).length > 0) {
+            output += `    And properties\n`;
+            output += `      | name | value |\n`;
+            Object.entries(parameters).forEach(([key, value]) => {
+                output += `      | ${key} | ${value} |\n`;
+            });
+        }
 
-            output += `    When I validate the response\n`;
-            output += `    Then the request should succeed\n`;
+        output += `    When I validate the response\n`;
+        output += `    Then the request should succeed\n`;
 
-            function processProperties(obj, prefix = '') {
-                for (const [key, value] of Object.entries(obj)) {
-                    const propertyPath = prefix ? `${prefix}.${key}` : key;
-                    
-                    if (!shouldIncludeResponseProperty(propertyPath, value)) {
-                        continue;
-                    }
+        function processProperties(obj, prefix = '') {
+            for (const [key, value] of Object.entries(obj)) {
+                const propertyPath = prefix ? `${prefix}.${key}` : key;
+                
+                if (!shouldIncludeResponseProperty(propertyPath, value)) {
+                    continue;
+                }
 
-                    if (Array.isArray(value)) {
-                        output += `    And property ${propertyPath} should be a list with ${value.length} items\n`;
-                        value.forEach((item, index) => {
-                            if (typeof item === 'object' && item !== null) {
-                                processProperties(item, `${propertyPath}[${index}]`);
-                            }
-                        });
-                    } else if (typeof value === 'object' && value !== null) {
-                        processProperties(value, propertyPath);
-                    } else {
-                        output += `    And property ${propertyPath} should be "${value}"\n`;
-                    }
+                if (Array.isArray(value)) {
+                    output += `    And property ${propertyPath} should be a list with ${value.length} items\n`;
+                    value.forEach((item, index) => {
+                        if (typeof item === 'object' && item !== null) {
+                            processProperties(item, `${propertyPath}[${index}]`);
+                        }
+                    });
+                } else if (typeof value === 'object' && value !== null) {
+                    processProperties(value, propertyPath);
+                } else {
+                    output += `    And property ${propertyPath} should be "${value}"\n`;
                 }
             }
-
-            processProperties(data);
-            return output;
-        } catch (error) {
-            return `Error processing JSON: ${error.message}`;
         }
-    }
 
-    function handleProcess() {
-        isProcessing = true;
-        try {
-            outputText = processResponse(inputText, scenarioName);
-        } catch (error) {
-            outputText = `Error: ${error.message}`;
-        } finally {
-            isProcessing = false;
-        }
+        processProperties(data);
+        return output;
+    } catch (error) {
+        return `Error processing JSON: ${error.message}`;
     }
+}
 
-    const exampleData = `{
+function handleProcess() {
+    isProcessing = true;
+    try {
+        outputText = processResponse(inputText, scenarioName);
+    } catch (error) {
+        outputText = `Error: ${error.message}`;
+    } finally {
+        isProcessing = false;
+    }
+}
+
+const exampleData = `{
     "id": 1,
     "name": "Test User",
     "email": "test@example.com",
