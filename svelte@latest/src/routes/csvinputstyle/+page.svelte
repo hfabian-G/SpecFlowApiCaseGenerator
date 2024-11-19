@@ -168,9 +168,9 @@
     }
 
     // Example data to show in the textarea placeholder
-    const exampleData = `ScenarioName,Authorization,FullURL
-Get User,,https://jsonplaceholder.typicode.com/users/1
-Get Post,,https://jsonplaceholder.typicode.com/posts/1`;
+    const exampleData = `ScenarioName,Authorization,FullURL,userIdParameter,etc
+Get User,,https://jsonplaceholder.typicode.com/users,1,etc
+Get Post,,https://jsonplaceholder.typicode.com/users,5,etc`;
 </script>
 
 <div class="container bg-gradient-to-b from-gray-50 to-white">
@@ -181,8 +181,11 @@ Get Post,,https://jsonplaceholder.typicode.com/posts/1`;
             <label class="input-label">CSV Input</label>
             <div class="mb-4 text-sm text-gray-600 px-4">
                 Format (header row optional):<br/>
-                ScenarioName,Authorization,FullURL<br/>
-                Authorization can be left empty if not needed, or use "prev" to reuse previous row's auth.
+                <br/>
+                ScenarioName,Authorization,FullURL,parameter1,etc<br/>
+                <br/>
+                Authorization can be left empty if not needed, or use "prev" to reuse previous row's auth.<br/>
+                <br/>
             </div>
             <div class="mb-4 px-4 flex items-center">
                 <label class="flex items-center cursor-pointer">
