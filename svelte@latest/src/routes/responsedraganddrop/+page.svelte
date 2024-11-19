@@ -8,6 +8,7 @@
     let parameters = {};
     let inputPairs = [{ key: "", value: "" }];
     let keyInputs = [];
+    let filterDateAndNull = false;
 
     function handleValueBlur(index) {
         if (inputPairs[index].key && inputPairs[index].value) {
@@ -44,6 +45,16 @@
         }, 0);
     }
 
+    function shouldIncludeProperty(key, value) {
+        if (!filterDateAndNull) return true;
+        
+        // Skip if key contains "Date" or value is null
+        if (key.includes('Date') || key.includes('date') || value === null || value === "null") {
+            return false;
+        }
+        return true;
+    }
+
     function processResponse(jsonText, name = 'API Response') {
         try {
             const data = JSON.parse(jsonText);
@@ -53,7 +64,7 @@
             output += `Scenario: ${name}\n`;
             
             if (apiRoute) {
-                output += `    Given I send a POSTrequest to ${apiRoute}\n`;
+                output += `    Given I send a POST request to ${apiRoute}\n`;
             }
             
             if (authCode) {
@@ -65,7 +76,9 @@
                 output += `    And properties\n`;
                 output += `      | name | value |\n`;
                 Object.entries(parameters).forEach(([key, value]) => {
-                    output += `      | ${key} | ${value} |\n`;
+                    if (shouldIncludeProperty(key, value)) {
+                        output += `      | ${key} | ${value} |\n`;
+                    }
                 });
             }
 
@@ -77,6 +90,10 @@
                 for (const [key, value] of Object.entries(obj)) {
                     const propertyPath = prefix ? `${prefix}.${key}` : key;
                     
+                    if (!shouldIncludeProperty(propertyPath, value)) {
+                        continue;
+                    }
+
                     if (Array.isArray(value)) {
                         output += `    And property ${propertyPath} should be a list with ${value.length} items\n`;
                         value.forEach((item, index) => {
@@ -115,9 +132,11 @@
     "id": 1,
     "name": "Test User",
     "email": "test@example.com",
+    "createdDate": "2024-01-01",
     "details": {
         "age": 30,
-        "active": true
+        "active": true,
+        "lastLoginDate": null
     },
     "roles": ["user", "admin"]
 }`;
@@ -146,7 +165,18 @@
                     class="input"
                 />
             </div>
-
+            <br/>
+            <div class="mb-6 px-4">
+                <label class="flex items-center space-x-2 text-sm text-gray-600">
+                    <input
+                        type="checkbox"
+                        bind:checked={filterDateAndNull}
+                        class="form-checkbox h-4 w-4 text-blue-600"
+                    />
+                    <span>Filter out Date fields and null values</span>
+                </label>
+            </div>
+            <br/>
             <label class="input-label">Parameters (Optional)</label>
             <div class="pairs-container">
                 {#each inputPairs as pair, i}
@@ -169,7 +199,7 @@
                     </div>
                 {/each}
             </div>
-
+            <br/>
             <div class="mb-4 px-4">
                 <label class="block text-sm text-gray-600 mb-2">Scenario Name:</label>
                 <input
@@ -179,6 +209,7 @@
                     placeholder="Enter scenario name"
                 />
             </div>
+            <br/>
 
             <label class="input-label">JSON Response</label>
             <div class="mb-4 text-sm text-gray-600 px-4">
@@ -210,8 +241,6 @@
         </div>
     </div>
 </div>
-
-<h2 class="text-center text-3xl font-bold text-gray-800 mb-12">Delete Nulls and Dates from the Generated SpecFlow</h2>
 
 <style>
     .container {
@@ -318,5 +347,15 @@
     .generate-button:disabled {
         background-color: #9CA3AF;
         cursor: not-allowed;
+    }
+
+    .form-checkbox {
+        border-radius: 0.25rem;
+        border: 1px solid #D1D5DB;
+    }
+
+    .form-checkbox:checked {
+        background-color: #3B82F6;
+        border-color: #3B82F6;
     }
 </style>
