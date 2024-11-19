@@ -45,7 +45,7 @@
         }, 0);
     }
 
-    function shouldIncludeProperty(key, value) {
+    function shouldIncludeResponseProperty(key, value) {
         if (!filterDateAndNull) return true;
         
         // Skip if key contains "Date" or value is null
@@ -71,26 +71,24 @@
                 output += `    And header Authorization equals to "${authCode}"\n`;
             }
 
-            // Add parameters if any exist
+            // Add parameters if any exist - Now we include all parameters
             if (Object.keys(parameters).length > 0) {
                 output += `    And properties\n`;
                 output += `      | name | value |\n`;
                 Object.entries(parameters).forEach(([key, value]) => {
-                    if (shouldIncludeProperty(key, value)) {
-                        output += `      | ${key} | ${value} |\n`;
-                    }
+                    output += `      | ${key} | ${value} |\n`;
                 });
             }
 
             output += `    When I validate the response\n`;
             output += `    Then the request should succeed\n`;
 
-            // Process response properties recursively
+            // Process response properties recursively - Apply filtering only here
             function processProperties(obj, prefix = '') {
                 for (const [key, value] of Object.entries(obj)) {
                     const propertyPath = prefix ? `${prefix}.${key}` : key;
                     
-                    if (!shouldIncludeProperty(propertyPath, value)) {
+                    if (!shouldIncludeResponseProperty(propertyPath, value)) {
                         continue;
                     }
 
@@ -173,7 +171,7 @@
                         bind:checked={filterDateAndNull}
                         class="form-checkbox h-4 w-4 text-blue-600"
                     />
-                    <span>Filter out Date fields and null values</span>
+                    <span>Filter out Date fields and null values from response</span>
                 </label>
             </div>
             <br/>
