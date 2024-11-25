@@ -80,7 +80,7 @@
             }
             
             if (authCode) {
-                output += `    And header Authorization equals to ${authCode}\n`;
+                output += `    And header Authorization equals to "${authCode}"\n`;
             }
 
             if (Object.keys(parameters).length > 0) {
