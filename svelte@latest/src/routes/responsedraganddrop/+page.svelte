@@ -1,4 +1,5 @@
-<script>import { onMount } from 'svelte';
+<script>
+import { onMount } from 'svelte';
 
 // State variables
 let inputText = '';
@@ -60,7 +61,6 @@ function addNewPair() {
     }
 }
 
-// Rest of the code remains unchanged
 function shouldIncludeResponseProperty(key, value) {
     if (!filterDateAndNull) return true;
     
@@ -68,6 +68,16 @@ function shouldIncludeResponseProperty(key, value) {
         return false;
     }
     return true;
+}
+
+function formatValue(value) {
+    // Special handling for boolean values
+    if (value == 'true') {
+        return 'True';
+    } else if (value == 'false'){
+        return 'False';
+    }
+    return `${value}`;
 }
 
 function processResponse(jsonText, name = 'API Response') {
@@ -114,7 +124,7 @@ function processResponse(jsonText, name = 'API Response') {
                 } else if (typeof value === 'object' && value !== null) {
                     processProperties(value, propertyPath);
                 } else {
-                    output += `    And property ${propertyPath} should be "${value}"\n`;
+                    output += `    And property ${propertyPath} should be "${formatValue(value)}"\n`;
                 }
             }
         }
