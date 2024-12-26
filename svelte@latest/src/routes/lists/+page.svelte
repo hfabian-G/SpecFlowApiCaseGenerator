@@ -103,17 +103,28 @@
                     }
 
                     if (Array.isArray(value)) {
-                        // For each item in the array, create a specific assertion
                         value.forEach((item, index) => {
                             if (typeof item === 'object' && item !== null) {
-                                // For objects within arrays, create assertions for each property
-                                Object.entries(item).forEach(([itemKey, itemValue]) => {
-                                    if (shouldIncludeResponseProperty(itemKey, itemValue)) {
-                                        output += `    Then the list ${propertyPath} contains an element with property ${itemKey} equal to ${itemValue}\n`;
-                                    }
-                                });
-                            } else {
-                                // For primitive values in arrays
+                                // For nested objects within arrays, create assertions for each property path
+                                function processNestedObject(obj, currentPath = '') {
+                                    Object.entries(obj).forEach(([nestedKey, nestedValue]) => {
+                                        const nestedPath = currentPath ? `${currentPath}.${nestedKey}` : nestedKey;
+                                        
+                                        if (typeof nestedValue === 'object' && nestedValue !== null && !Array.isArray(nestedValue)) {
+                                            processNestedObject(nestedValue, nestedPath);
+                                        } else if (Array.isArray(nestedValue)) {
+                                            nestedValue.forEach(arrayItem => {
+                                                if (shouldIncludeResponseProperty(nestedKey, arrayItem)) {
+                                                    output += `    Then the list ${propertyPath} contains an element with property ${nestedPath} equal to ${arrayItem}\n`;
+                                                }
+                                            });
+                                        } else if (shouldIncludeResponseProperty(nestedKey, nestedValue)) {
+                                            output += `    Then the list ${propertyPath} contains an element with property ${nestedPath} equal to ${nestedValue}\n`;
+                                        }
+                                    });
+                                }
+                                processNestedObject(item);
+                            } else if (shouldIncludeResponseProperty(key, item)) {
                                 output += `    Then the list ${propertyPath} contains an element equal to ${item}\n`;
                             }
                         });
