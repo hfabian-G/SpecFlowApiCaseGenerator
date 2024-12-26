@@ -120,7 +120,7 @@
                     } else if (typeof value === 'object' && value !== null) {
                         processProperties(value, propertyPath);
                     } else {
-                        output += `    And property ${propertyPath} should be ${value}\n`;
+                        output += `    And property ${propertyPath} should be "${value}"\n`;
                     }
                 }
             }
