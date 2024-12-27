@@ -175,6 +175,7 @@ Get Post,,https://jsonplaceholder.typicode.com/users,5,etc`;
 
 <div class="container bg-gradient-to-b from-gray-50 to-white">
     <h1 class="text-center text-3xl font-bold text-gray-800 mb-12">Batch CSV to SpecFlow Converter</h1>
+    <p class="text-center text-gray-600 mb-12">This page is used for call-and-response for multiple Scenarios within the same Feature</p>
     
     <div class="card-container">
         <div class="input-section">

@@ -178,6 +178,7 @@
             JSON to SpecFlow Converter
         </h1>
         <p class="text-center text-gray-600 mb-12">Transform your JSON responses into SpecFlow scenarios</p>
+        <p class="text-center text-gray-600 mb-12">This page is meant to deal with lists where indexes might change over time, and CORS disallows call-and-response</p>
     </div>
     
     <div class="card-container">
