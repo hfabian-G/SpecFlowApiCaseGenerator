@@ -17,10 +17,7 @@
 		</svg>
 		<ul>
 			<li aria-current={$page.url.pathname === '/' ? 'page' : undefined}>
-				<a href="/">Basic</a>
-			</li>
-			<li aria-current={$page.url.pathname === '/CSV' ? 'page': undefined}>
-				<a href="/csvinputstyle">CSV-Style</a>
+				<a href="/">Regular</a>
 			</li>
 			<li aria-current={$page.url.pathname === '/DragAndDrop' ? 'page' : undefined}>
 				<a href="/responsedraganddrop">Drag-And-Drop</a>
