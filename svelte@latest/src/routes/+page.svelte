@@ -7,6 +7,7 @@
    let authCode = "";
    let outputText = "";
    let isLoading = false;
+   let useBodyParams = false;
 
    $: apiRoute = baseUrl && endpoint ? 
        (baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl) + 
@@ -17,15 +18,8 @@
        outputText = "";
        
        try {
-           // Construct URL with query parameters
+           // Construct URL and prepare parameters
            let finalUrl = apiRoute;
-           if (Object.keys(parameters).length > 0) {
-               const queryString = new URLSearchParams(parameters).toString();
-               finalUrl = `${apiRoute}?${queryString}`;
-           }
-
-           console.log(finalUrl);
-
            const headers = {
                'Content-Type': 'application/json'
            };
@@ -34,10 +28,22 @@
                headers['Authorization'] = authCode;
            }
 
-           const response = await fetch(finalUrl, {
-               method: 'GET',
+           const options = {
+               method: useBodyParams ? 'POST' : 'GET',
                headers: headers
-           });
+           };
+
+           if (Object.keys(parameters).length > 0) {
+               if (useBodyParams) {
+                   options.body = JSON.stringify(parameters);
+               } else {
+                   const queryString = new URLSearchParams(parameters).toString();
+                   finalUrl = `${apiRoute}?${queryString}`;
+               }
+           }
+
+           console.log(finalUrl);
+           const response = await fetch(finalUrl, options);
 
            // Generate SpecFlow test
            let specFlow = `Scenario: CHANGE\n`;
@@ -47,13 +53,20 @@
                specFlow += `    And I make a request with the authorization "${authCode}"\n`;
            }
 
-           // Add parameters table if there are any parameters
+           // Add parameters based on the mode
            if (Object.keys(parameters).length > 0) {
-               specFlow += `    Given the parameters\n`;
-               specFlow += `      |name|value|\n`;
-               Object.entries(parameters).forEach(([key, value]) => {
-                   specFlow += `      |${key}|${value}|\n`;
-               });
+               if (useBodyParams) {
+                   specFlow += `    And request body\n`;
+                   specFlow += `      """\n`;
+                   specFlow += `      ${JSON.stringify(parameters, null, 6).replace(/^/gm, '      ')}\n`;
+                   specFlow += `      """\n`;
+               } else {
+                   specFlow += `    Given the parameters\n`;
+                   specFlow += `      |name|value|\n`;
+                   Object.entries(parameters).forEach(([key, value]) => {
+                       specFlow += `      |${key}|${value}|\n`;
+                   });
+               }
            }
            
            specFlow += `    When I validate the response\n`;
@@ -70,19 +83,31 @@
            // Only process response body for successful responses
            const data = await response.json();
 
-           // Process response properties recursively
+           // Process response properties recursively with list handling
            function processProperties(obj, prefix = '') {
                for (const [key, value] of Object.entries(obj)) {
                    const propertyPath = prefix ? `${prefix}.${key}` : key;
                    
                    if (Array.isArray(value)) {
                        specFlow += `    And property ${propertyPath} should be a list with ${value.length} items\n`;
-                       // Process array items if they are objects
-                       value.forEach((item, index) => {
+                       
+                       // Create a map of required properties for list items
+                       const requiredProps = new Set();
+                       value.forEach(item => {
                            if (typeof item === 'object' && item !== null) {
-                               processProperties(item, `${propertyPath}[${index}]`);
+                               Object.keys(item).forEach(prop => requiredProps.add(prop));
                            }
                        });
+
+                       // For each required property, validate it exists in each item
+                       requiredProps.forEach(prop => {
+                           specFlow += `    And each item in ${propertyPath} should have property "${prop}"\n`;
+                       });
+
+                       // Process the first item's properties as an example
+                       if (value.length > 0 && typeof value[0] === 'object' && value[0] !== null) {
+                           processProperties(value[0], `${propertyPath}[*]`);
+                       }
                    } else if (typeof value === 'object' && value !== null) {
                        processProperties(value, propertyPath);
                    } else {
@@ -136,194 +161,339 @@
        }, 0);
    }
 </script>
-<div class="container bg-gradient-to-b from-gray-50 to-white">
-  <h1 class="text-center text-3xl font-bold text-gray-800 mb-12">API to SpecFlow Converter</h1>
-  <h2>Note: This only handles query string parameters at the moment</h2>
-  
-  <div class="card-container">
-      <div class="input-section">
-          <label class="input-label">API Configuration</label>
-          <div class="input-container mb-6">
-              <input 
-                  type="text" 
-                  bind:value={baseUrl} 
-                  placeholder="Base URL (e.g. https://api.example.com)"
-                  class="input"
-              />
-              <input 
-                  type="text" 
-                  bind:value={endpoint} 
-                  placeholder="Endpoint (e.g. /api/v1/users)"
-                  class="input"
-              />
-          </div>
 
-          <div class="input-container mb-8">
-              <input 
-                  type="text" 
-                  bind:value={authCode} 
-                  placeholder="Basic Auth (e.g. Basic dXNlcjpwYXNz...)"
-                  class="input"
-              />
-          </div>
+<div class="container">
+    <h1>API to SpecFlow Converter</h1>
+    <p class="subtitle">Generate SpecFlow scenarios from API responses</p>
+    
+    <div class="card-container">
+        <div class="input-section">
+            <div class="section-header">
+                <div class="section-icon">⚙️</div>
+                <label class="input-label">API Configuration</label>
+            </div>
+            <div class="input-container mb-6">
+                <input 
+                    type="text" 
+                    bind:value={baseUrl} 
+                    placeholder="Base URL (e.g. https://api.example.com)"
+                    class="input"
+                />
+                <input 
+                    type="text" 
+                    bind:value={endpoint} 
+                    placeholder="Endpoint (e.g. /api/v1/users)"
+                    class="input"
+                />
+            </div>
 
-          {#if apiRoute}
-              <div class="url-display">
-                  Full URL: {apiRoute}
-              </div>
-          {/if}
-      </div>
-      
-      <div class="input-section mt-8">
-          <label class="input-label">Parameters (Optional)</label>
-          <div class="pairs-container">
-              {#each inputPairs as pair, i}
-                  <div class="input-container mb-6">
-                      <input 
-                          type="text" 
-                          bind:value={pair.key} 
-                          placeholder="Key"
-                          class="input"
-                          bind:this={keyInputs[i]}
-                          on:input={() => handleKeyInput(i)}
-                      />
-                      <input 
-                          type="text" 
-                          bind:value={pair.value} 
-                          placeholder="Value"
-                          class="input"
-                          on:blur={() => handleValueBlur(i)}
-                      />
-                  </div>
-              {/each}
-          </div>
-      </div>
+            <div class="input-container mb-8">
+                <input 
+                    type="text" 
+                    bind:value={authCode} 
+                    placeholder="Basic Auth (e.g. Basic dXNlcjpwYXNz...)"
+                    class="input"
+                />
+            </div>
 
-      <button 
-          on:click={handleGenerate}
-          class="generate-button"
-          disabled={!apiRoute || isLoading}
-      >
-          {isLoading ? 'Generating...' : 'Generate SpecFlow'}
-      </button>
+            {#if apiRoute}
+                <div class="url-display">
+                    Full URL: {apiRoute}
+                </div>
+            {/if}
+        </div>
+        
+        <div class="input-section">
+            <div class="section-header">
+                <div class="section-icon">🔑</div>
+                <label class="input-label">Parameters</label>
+            </div>
 
-      <textarea
-          readonly
-          class="output-textarea"
-          value={outputText}
-          placeholder="Generated SpecFlow will appear here..."
-      />
-  </div>
+            <div class="checkbox-container mb-6">
+                <label class="checkbox-label">
+                    <input
+                        type="checkbox"
+                        bind:checked={useBodyParams}
+                        class="form-checkbox"
+                    />
+                    <span>Send parameters in request body (uses POST instead of GET)</span>
+                </label>
+            </div>
+
+            <div class="pairs-container">
+                {#each inputPairs as pair, i}
+                    <div class="input-container mb-6">
+                        <input 
+                            type="text" 
+                            bind:value={pair.key} 
+                            placeholder="Key"
+                            class="input"
+                            bind:this={keyInputs[i]}
+                            on:input={() => handleKeyInput(i)}
+                        />
+                        <input 
+                            type="text" 
+                            bind:value={pair.value} 
+                            placeholder="Value"
+                            class="input"
+                            on:blur={() => handleValueBlur(i)}
+                        />
+                    </div>
+                {/each}
+            </div>
+        </div>
+
+        <button 
+            on:click={handleGenerate}
+            class="generate-button"
+            disabled={!apiRoute || isLoading}
+        >
+            <span class="button-text">{isLoading ? 'Generating...' : 'Generate SpecFlow'}</span>
+            <span class="button-icon">➜</span>
+        </button>
+
+        <div class="output-section">
+            <div class="section-header">
+                <div class="section-icon">📝</div>
+                <label class="input-label">Generated SpecFlow</label>
+            </div>
+            <textarea
+                readonly
+                class="output-textarea"
+                value={outputText}
+                placeholder="Generated SpecFlow will appear here..."
+            />
+        </div>
+    </div>
 </div>
 
 <style>
-  .container {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 3rem;
-      overflow-y: auto;
-  }
+    .container {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 3rem;
+        overflow-y: auto;
+        background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+    }
 
-  .card-container {
-      background-color: white;
-      padding: 2rem;
-      border-radius: 1rem;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-      width: 90%;
-      max-width: 1200px;
-  }
+    h1 {
+        font-family: var(--font-display);
+        font-size: 2.4rem;
+        font-weight: 400;
+        color: #000000;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        text-align: center;
+    }
 
-  .input-section {
-      margin-bottom: 2rem;
-  }
+    .subtitle {
+        font-family: var(--font-body);
+        font-size: 1.1rem;
+        color: #404040;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
 
-  .input-label {
-      display: block;
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: #4B5563;
-      margin-bottom: 1rem;
-  }
+    .card-container {
+        background-color: white;
+        padding: 2.5rem;
+        border-radius: 1rem;
+        box-shadow: 
+            -8px -8px 0 rgba(0, 0, 0, 0.2),
+            8px 8px 0 rgba(0, 0, 0, 0.1);
+        width: 90%;
+        max-width: 1200px;
+        border: 2px solid #000;
+        position: relative;
+    }
 
-  .pairs-container {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-  }
+    .card-container::before {
+        content: '';
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        right: -8px;
+        bottom: -8px;
+        background: repeating-linear-gradient(
+            45deg,
+            rgba(0, 0, 0, 0.05),
+            rgba(0, 0, 0, 0.05) 2px,
+            transparent 2px,
+            transparent 8px
+        );
+        z-index: -1;
+        border-radius: 1rem;
+    }
 
-  .input-container {
-      display: flex;
-      gap: 1.5rem;
-      width: 100%;
-  }
+    .input-section {
+        margin-bottom: 3rem;
+        padding: 0 1rem;
+    }
 
-  .input {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid #E5E7EB;
-      border-radius: 0.5rem;
-      font-size: 0.95rem;
-      transition: all 0.2s;
-  }
+    .input-label {
+        display: block;
+        font-size: 1.2rem;
+        font-family: var(--font-display);
+        font-weight: 400;
+        color: #000000;
+        margin-bottom: 1.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+    }
 
-  .input:focus {
-      outline: none;
-      border-color: #60A5FA;
-      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
-  }
+    .pairs-container {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
 
-  .url-display {
-      background-color: #F3F4F6;
-      padding: 0.75rem;
-      border-radius: 0.5rem;
-      color: #4B5563;
-      font-family: monospace;
-      font-size: 0.9rem;
-      width: 100%;
-  }
+    .input-container {
+        display: flex;
+        gap: 1.5rem;
+        width: 100%;
+        margin-bottom: 1rem;
+    }
 
-  .generate-button {
-      width: 100%;
-      padding: 0.75rem;
-      background-color: #3B82F6;
-      color: white;
-      border: none;
-      border-radius: 0.5rem;
-      font-weight: 500;
-      margin: 2rem 0;
-      transition: all 0.2s;
-  }
+    .input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 2px solid #000000;
+        border-radius: 0.5rem;
+        font-size: 0.95rem;
+        font-family: var(--font-body);
+        transition: all 0.2s;
+        background-color: #ffffff;
+    }
 
-  .generate-button:hover:not(:disabled) {
-      background-color: #2563EB;
-      transform: translateY(-1px);
-  }
+    .input:focus {
+        outline: none;
+        border-color: #000000;
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
+        transform: translate(-2px, -2px);
+    }
 
-  .generate-button:disabled {
-      background-color: #9CA3AF;
-      cursor: not-allowed;
-  }
+    .url-display {
+        background-color: #F3F4F6;
+        padding: 0.75rem;
+        border-radius: 0.5rem;
+        color: #4B5563;
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        width: 100%;
+    }
 
-  .output-textarea {
-      resize: vertical;
-      min-height: 300px;
-      width: 100%;
-      padding: 1rem;
-      border: 1px solid #E5E7EB;
-      border-radius: 0.5rem;
-      font-family: monospace;
-      font-size: 0.9rem;
-      background-color: #F9FAFB;
-      margin-top: 1rem;
-      box-sizing: border-box;
-  }
+    .generate-button {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #000000;
+        color: white;
+        border: 2px solid #000000;
+        border-radius: 0.5rem;
+        font-family: var(--font-display);
+        font-size: 1.2rem;
+        font-weight: 400;
+        margin: 2rem 0;
+        transition: all 0.2s;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        position: relative;
+    }
 
-  .output-textarea:focus {
-      outline: none;
-      border-color: #60A5FA;
-      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
-  }
+    .generate-button:hover:not(:disabled) {
+        background-color: #ffffff;
+        color: #000000;
+        transform: translate(-4px, -4px);
+        box-shadow: 4px 4px 0 #000000;
+    }
+
+    .generate-button:disabled {
+        background-color: #808080;
+        border-color: #808080;
+        cursor: not-allowed;
+    }
+
+    .output-textarea {
+        resize: vertical;
+        min-height: 300px;
+        width: 100%;
+        padding: 1rem;
+        border: 2px solid #000000;
+        border-radius: 0.5rem;
+        font-family: monospace;
+        font-size: 0.9rem;
+        background-color: #ffffff;
+        margin-top: 1rem;
+        box-sizing: border-box;
+        position: relative;
+    }
+
+    .output-textarea:focus {
+        outline: none;
+        border-color: #000000;
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
+        transform: translate(-2px, -2px);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding: 0.5rem 0;
+        border-bottom: 2px solid #000000;
+    }
+
+    .section-icon {
+        font-size: 1.5rem;
+        margin-right: 0.75rem;
+    }
+
+    .checkbox-container {
+        margin: 1.5rem 0;
+        padding: 1rem;
+        background-color: #f8f8f8;
+        border-radius: 0.75rem;
+        border: 2px solid #000000;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-family: var(--font-body);
+        font-size: 0.95rem;
+        color: #000000;
+        cursor: pointer;
+    }
+
+    .form-checkbox {
+        width: 1.25rem;
+        height: 1.25rem;
+        border: 2px solid #000000;
+        border-radius: 0.25rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-checkbox:checked {
+        background-color: #000000;
+        border-color: #000000;
+    }
+
+    .button-text {
+        font-family: var(--font-display);
+        font-size: 1.2rem;
+        letter-spacing: 0.1em;
+    }
+
+    .button-icon {
+        font-size: 1.2rem;
+        transition: transform 0.3s ease;
+    }
+
+    .generate-button:hover .button-icon {
+        transform: translateX(5px);
+    }
 </style>

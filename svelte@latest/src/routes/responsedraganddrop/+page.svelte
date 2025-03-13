@@ -292,6 +292,7 @@ const exampleData = `{
         align-items: center;
         padding: 3rem;
         overflow-y: auto;
+        background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
     }
 
     .title-section {
@@ -299,18 +300,54 @@ const exampleData = `{
         text-align: center;
     }
 
+    .title-section h1 {
+        font-size: 3rem;
+        font-family: var(--font-display);
+        font-weight: 400;
+        color: #000000;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        line-height: 1.2;
+    }
+
+    .title-section p {
+        color: #404040;
+        font-size: 1.1rem;
+        font-family: var(--font-body);
+        font-weight: 400;
+    }
+
     .card-container {
         background-color: white;
         padding: 2rem;
         border-radius: 1.5rem;
-        box-shadow: 0 4px 20px -1px rgba(0, 0, 0, 0.1), 0 2px 10px -1px rgba(0, 0, 0, 0.06);
+        box-shadow: 
+            -8px -8px 0 rgba(0, 0, 0, 0.2),
+            8px 8px 0 rgba(0, 0, 0, 0.1);
         width: 90%;
         max-width: 1200px;
+        border: 2px solid #000;
+        position: relative;
         transition: all 0.3s ease;
     }
 
-    .card-container:hover {
-        box-shadow: 0 8px 30px -1px rgba(0, 0, 0, 0.1), 0 4px 15px -1px rgba(0, 0, 0, 0.06);
+    .card-container::before {
+        content: '';
+        position: absolute;
+        top: 8px;
+        left: 8px;
+        right: -8px;
+        bottom: -8px;
+        background: repeating-linear-gradient(
+            45deg,
+            rgba(0, 0, 0, 0.05),
+            rgba(0, 0, 0, 0.05) 2px,
+            transparent 2px,
+            transparent 8px
+        );
+        z-index: -1;
+        border-radius: 1.5rem;
     }
 
     .input-section, .output-section {
@@ -323,7 +360,7 @@ const exampleData = `{
         align-items: center;
         margin-bottom: 1.5rem;
         padding: 0.5rem 0;
-        border-bottom: 2px solid #f0f0f0;
+        border-bottom: 2px solid #000000;
     }
 
     .section-icon {
@@ -332,10 +369,13 @@ const exampleData = `{
     }
 
     .input-label {
-        font-size: 1.1rem;
-        font-weight: 600;
-        color: #4B5563;
+        font-size: 1.2rem;
+        font-family: var(--font-display);
+        font-weight: 400;
+        color: #000000;
         margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
     }
 
     .hover-effect {
@@ -343,8 +383,8 @@ const exampleData = `{
     }
 
     .hover-effect:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transform: translate(-2px, -2px);
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
     }
 
     .input-container {
@@ -356,67 +396,77 @@ const exampleData = `{
     .input {
         width: 100%;
         padding: 0.75rem;
-        border: 1px solid #E5E7EB;
+        border: 2px solid #000000;
         border-radius: 0.75rem;
         font-size: 0.95rem;
+        font-family: var(--font-body);
         transition: all 0.2s;
-        background-color: #FAFAFA;
+        background-color: #ffffff;
     }
 
     .input:focus {
         outline: none;
-        border-color: #60A5FA;
-        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
-        background-color: white;
+        border-color: #000000;
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
+        transform: translate(-2px, -2px);
     }
 
     .input-textarea, .output-textarea {
         width: 100%;
         min-height: 200px;
         padding: 1rem;
-        border: 1px solid #E5E7EB;
+        border: 2px solid #000000;
         border-radius: 0.75rem;
-        font-family: monospace;
+        font-family: var(--font-mono);
         font-size: 0.9rem;
         resize: vertical;
-        background-color: #FAFAFA;
+        background-color: #ffffff;
     }
 
     .input-textarea:focus, .output-textarea:focus {
         outline: none;
-        border-color: #60A5FA;
-        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
-        background-color: white;
+        border-color: #000000;
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.2);
+        transform: translate(-2px, -2px);
     }
 
     .generate-button {
         width: calc(100% - 4rem);
         margin: 2rem 2rem;
         padding: 1rem;
-        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        background-color: #000000;
         color: white;
-        border: none;
+        border: 2px solid #000000;
         border-radius: 0.75rem;
-        font-weight: 500;
+        font-family: var(--font-display);
+        font-size: 1.2rem;
+        font-weight: 400;
         transition: all 0.3s ease;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
     }
 
     .generate-button:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        background-color: #ffffff;
+        color: #000000;
+        transform: translate(-4px, -4px);
+        box-shadow: 4px 4px 0 #000000;
     }
 
     .generate-button:disabled {
-        background: linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%);
+        background-color: #808080;
+        border-color: #808080;
         cursor: not-allowed;
     }
 
     .button-text {
-        font-size: 1.1rem;
+        font-family: var(--font-display);
+        font-size: 1.2rem;
+        letter-spacing: 0.1em;
     }
 
     .button-icon {
@@ -430,24 +480,27 @@ const exampleData = `{
 
     .form-checkbox {
         border-radius: 0.25rem;
-        border: 2px solid #D1D5DB;
+        border: 2px solid #000000;
         transition: all 0.2s ease;
     }
 
     .form-checkbox:checked {
-        background-color: #3B82F6;
-        border-color: #3B82F6;
+        background-color: #000000;
+        border-color: #000000;
         transform: scale(1.1);
     }
 
     .filter-section {
-        background-color: #F9FAFB;
+        background-color: #f5f5f5;
         border-radius: 0.75rem;
+        border: 2px solid #000000;
         transition: all 0.2s ease;
     }
 
     .filter-section:hover {
-        background-color: #F3F4F6;
+        background-color: #ffffff;
+        transform: translate(-2px, -2px);
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
     }
 
     @keyframes gradient {

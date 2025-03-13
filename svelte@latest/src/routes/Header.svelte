@@ -25,9 +25,6 @@
 			<li aria-current={$page.url.pathname === '/DragAndDrop' ? 'page' : undefined}>
 				<a href="/responsedraganddrop">Drag-And-Drop</a>
 			</li>
-			<li aria-current={$page.url.pathname === '/Lists' ? 'page' : undefined}>
-				<a href="/lists">Lists</a>
-			</li>
 		</ul>
 		<svg viewBox="0 0 2 3" aria-hidden="true">
 			<path d="M0,0 L0,3 C0.5,3 0.5,3 1,2 L2,0 Z" />
@@ -45,6 +42,10 @@
 	header {
 		display: flex;
 		justify-content: space-between;
+		background-color: #ffffff;
+		border-bottom: 2px solid #000000;
+		padding: 0.5rem 1rem;
+		box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
 	}
 
 	.corner {
@@ -58,6 +59,12 @@
 		justify-content: center;
 		width: 100%;
 		height: 100%;
+		transition: all 0.2s ease;
+	}
+
+	.corner a:hover {
+		transform: translate(-2px, -2px);
+		filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.3));
 	}
 
 	.corner img {
@@ -69,7 +76,7 @@
 	nav {
 		display: flex;
 		justify-content: center;
-		--background: rgba(255, 255, 255, 0.7);
+		--background: #ffffff;
 	}
 
 	svg {
@@ -93,6 +100,8 @@
 		list-style: none;
 		background: var(--background);
 		background-size: contain;
+		border: 2px solid #000000;
+		border-radius: 0.5rem;
 	}
 
 	li {
@@ -109,24 +118,28 @@
 		top: 0;
 		left: calc(50% - var(--size));
 		border: var(--size) solid transparent;
-		border-top: var(--size) solid var(--color-theme-1);
+		border-top: var(--size) solid #000000;
 	}
 
 	nav a {
 		display: flex;
 		height: 100%;
 		align-items: center;
-		padding: 0 0.5rem;
-		color: var(--color-text);
-		font-weight: 700;
-		font-size: 0.8rem;
+		padding: 0 1rem;
+		color: #000000;
+		font-family: var(--font-display);
+		font-weight: 400;
+		font-size: 0.9rem;
 		text-transform: uppercase;
 		letter-spacing: 0.1em;
 		text-decoration: none;
-		transition: color 0.2s linear;
+		transition: all 0.2s ease;
 	}
 
-	a:hover {
-		color: var(--color-theme-1);
+	nav a:hover {
+		color: #000000;
+		background-color: rgba(0, 0, 0, 0.05);
+		transform: translate(-1px, -1px);
+		box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
 	}
 </style>
